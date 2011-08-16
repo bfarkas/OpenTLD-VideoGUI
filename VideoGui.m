@@ -22,7 +22,7 @@ function varargout = VideoGui(varargin)
 
 % Edit the above text to modify the response to help VideoGui
 
-% Last Modified by GUIDE v2.5 07-Aug-2011 01:39:20
+% Last Modified by GUIDE v2.5 16-Aug-2011 18:24:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -120,6 +120,7 @@ function setlearninpoint_Callback(hObject, eventdata, handles)
     if firstlearnframe == 0
         firstlearnframe = 1;
     end
+    set(hObject,'String',['Learn In = ',num2str(firstlearnframe)]);
 
 % --- Executes on slider movement.
 function frameslider_Callback(hObject, eventdata, handles)
@@ -161,6 +162,9 @@ function setlearnoutpoint_Callback(hObject, eventdata, handles)
     global lastlearnframe;
     global videoframes;
     lastlearnframe = floor(get(handles.frameslider,'Value')*videoframes);
+    set(hObject,'String',['Learn Out = ',num2str(lastlearnframe)]);
+    set(handles.startlearningbutton,'Enable','on');
+    set(handles.startlearningbutton,'ForegroundColor',[0 0 0]);
 
 % --- Executes on button press in openfilebutton.
 function openfilebutton_Callback(hObject, eventdata, handles)
@@ -168,16 +172,25 @@ function openfilebutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
     global videoframes;
+    global videoheight;
+    global videowidth;
     global opt;
     [videofile,videopath]=uigetfile('*.*','Choose a Videofile');
-    opt.source.vidobj = VideoReader(strcat(videopath,videofile));
-    videoframes = opt.source.vidobj.NumberOfFrames;
-    opt.source.idx = 1:videoframes;
-    set(handles.framecounter,'String','1');
-    set(handles.frameslider,'Enable','on');
-    %axes(handles.videowindow);
-    image(read(opt.source.vidobj, 1),'Parent',handles.videowindow);
-
+    if ischar(videofile) && ischar(videopath)
+        opt.source.vidobj = VideoReader(strcat(videopath,videofile));
+        videoframes = opt.source.vidobj.NumberOfFrames;
+        videoheight = opt.source.vidobj.Height;
+        videowidth = opt.source.vidobj.Width;
+        opt.source.idx = 1:videoframes;
+        set(handles.framecounter,'String','1');
+        set(handles.frameslider,'Enable','on');
+        %axes(handles.videowindow);
+        image(read(opt.source.vidobj, 1),'Parent',handles.videowindow);
+        set(handles.setlearninpoint,'Enable','on');
+        set(handles.setlearnoutpoint,'Enable','on');
+        set(handles.setlearninpoint,'ForegroundColor',[0 0 0]);
+        set(handles.setlearnoutpoint,'ForegroundColor',[0 0 0]);
+    end
 
 % --- Executes on button press in startlearningbutton.
 function startlearningbutton_Callback(hObject, eventdata, handles)
@@ -190,6 +203,10 @@ function startlearningbutton_Callback(hObject, eventdata, handles)
     global lastlearnframe;    
     %axes(handles.videowindow);
     set(handles.frameslider,'Enable','inactive');
+    set(handles.setlearninpoint,'Enable','inactive');
+    set(handles.setlearninpoint,'ForegroundColor',[0.5 0.5 0.5]);
+    set(handles.setlearnoutpoint,'Enable','inactive');
+    set(handles.setlearnoutpoint,'ForegroundColor',[0.5 0.5 0.5]);
     set(handles.statuslabel,'String','learning...');
     while 1
         source = tldInitFirstFrame(tld,opt.source,firstlearnframe,opt.model.min_win); % get initial bounding box, return 'empty' if bounding box is too small
@@ -208,12 +225,16 @@ function startlearningbutton_Callback(hObject, eventdata, handles)
     
         tld = tldProcessFrame(tld,i); % process frame i
         disp(['learned frame no ', num2str(i)]);
+        set(handles.statuslabel,'String',['learning... ',num2str(floor(((i-firstlearnframe)/(lastlearnframe-firstlearnframe))*100)),'%']);
         set(gcf,'CurrentAxes',handles.videowindow);
         %tic;
         tldDisplay(1,tld,i); % display results on frame i
     end
-    set(handles.startlearningbutton,'Enable','inactive');
+    set(hObject,'Enable','inactive');
+    set(hObject,'ForegroundColor',[0.5 0.5 0.5]);
     set(handles.statuslabel,'String','done learning');
+    set(handles.startprocessing,'Enable','on');
+    set(handles.startprocessing,'ForegroundColor',[0 0 0]);
     
 
 % --- Executes on button press in startprocessing.
@@ -228,6 +249,8 @@ function startprocessing_Callback(hObject, eventdata, handles)
     killed = 0;
     set(handles.frameslider,'Enable','inactive');
     set(handles.statuslabel,'String','processing...');
+    set(handles.killswitch,'Enable','on');
+    set(handles.killswitch,'ForegroundColor',[0 0 0]);
     set(gcf,'CurrentAxes',handles.videowindow);
     if pausedframe > 0
         startingframe = pausedframe;
@@ -238,6 +261,7 @@ function startprocessing_Callback(hObject, eventdata, handles)
         
         tld = tldProcessFrame(tld,i); % process frame i
         disp(['processed frame no ', num2str(i)]);
+                set(handles.statuslabel,'String',['processing... ',num2str(floor((i/length(tld.source.idx))*100)),'%']);
         pausedframe = i;
         tldDisplay(1,tld,i); % display results on frame i
         if killed == 1
@@ -245,8 +269,18 @@ function startprocessing_Callback(hObject, eventdata, handles)
         end
     end
     bb = tld.bb; conf = tld.conf; % return results
-    dlmwrite([opt.savepath opt.savefilename],[bb; conf]');
+    if ischar(opt.savepath) && ischar(opt.savefilename)
+        dlmwrite([opt.savepath opt.savefilename],[bb; conf]');
+    else
+        opt.savepath = '_output/'; mkdir(temppath);
+        opt.savefilename = 'outfile.txt';
+        dlmwrite([opt.savepath opt.savefilename],[bb; conf]');
+    end    
     disp(['Results saved to ',opt.savepath,opt.savefilename]);
+    set(handles.openoutputbutton,'Enable','on');
+    set(handles.openoutputbutton,'ForegroundColor',[0 0 0]);
+    set(handles.createjournalbutton,'Enable','on');
+    set(handles.createjournalbutton,'ForegroundColor',[0 0 0]);
     if killed == 1
         set(handles.statuslabel,'String','killed');
     else    
@@ -314,3 +348,27 @@ function frameslider_KeyPressFcn(hObject, eventdata, handles)
 %	Character: character interpretation of the key(s) that was pressed
 %	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in openoutputbutton.
+function openoutputbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to openoutputbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    global opt;
+    open([opt.savepath opt.savefilename]);
+
+
+% --- Executes on button press in createjournalbutton.
+function createjournalbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to createjournalbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    global tld;
+    global videowidth;
+    global videoheight;
+    [journalfilename,journalpath]=uiputfile('*.csv','Save Dikablis Journal as'); % correct extension for journal?
+    journal = tld2dikablis(tld.bb,videowidth,videoheight);
+    dlmwrite([journalpath journalfilename],journal);
+    %open([journalpath journalfilename]);
+    
