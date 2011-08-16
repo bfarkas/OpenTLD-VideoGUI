@@ -18,7 +18,9 @@
 
 function img = img_get(source,I)
 
-if source.camera
+if source.videofile
+    img = img_alloc(read(source.vidobj,I));
+elseif source.camera
     img = img_alloc(getsnapshot(source.vid));
 else
     img = img_alloc(source.files(source.idx(I)).name);

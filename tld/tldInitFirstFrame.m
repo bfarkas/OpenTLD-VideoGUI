@@ -15,14 +15,18 @@
 % You should have received a copy of the GNU General Public License
 % along with TLD.  If not, see <http://www.gnu.org/licenses/>.
 
-function source = tldInitFirstFrame(tld,source,min_win)
+function source = tldInitFirstFrame(tld,source,index,min_win)
 
 % load the first frame into memory
-source.im0  = img_get(source,source.idx(1));
+if index > 0
+    source.im0 = img_get(source,source.idx(index));
+else
+    source.im0  = img_get(source,source.idx(1));
+end    
 
 % set the initial bounding box: 
 % - from file
-if source.camera == 0 && exist([source.input '/init.txt'],'file')
+if source.videofile == 0 && source.camera == 0 && exist([source.input '/init.txt'],'file')
     bb = dlmread([source.input '/init.txt']);
     source.bb = bb(:);
     

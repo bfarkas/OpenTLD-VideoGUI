@@ -23,7 +23,7 @@
 
 %source.vid = videoinput('winvideo', 1);
 %source.vid = videoinput('winvideo', 1,'RGB24_320x240');
-source.vid = videoinput('winvideo', 1,'YUY2_320x240');
+source.vid = videoinput('macvideo', 1,'YUY2_640x480');
 
 set(source.vid,'ReturnedColorSpace','grayscale');
 vidRes = get(source.vid, 'VideoResolution');

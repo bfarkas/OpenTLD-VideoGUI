@@ -16,10 +16,16 @@
 % along with TLD.  If not, see <http://www.gnu.org/licenses/>.
 
 function source = tldInitSource(source)
-% Initializes video stream from camera or an image sequence.
+% Initializes video stream from camera, file or an image sequence.
+
+% Video file
+if source.videofile
+    [videofile,videopath]=uigetfile('*.*','Choose a Videofile');
+    source.vidobj = VideoReader(strcat(videopath,videofile));
+    source.idx = 1:source.vidobj.NumberOfFrames;
 
 % Video stream
-if source.camera
+elseif source.camera
     initcamera;
     source.idx    = 1:10000; 
     

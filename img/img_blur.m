@@ -24,10 +24,10 @@ end
 
 csize = 6*sigma;
 
-shift = (csize - 1)/2;
+shift = int32(floor((csize - 1)/2));
 
 h = FSPECIAL('gaussian',csize,sigma);
 
-M = conv2(M,h);
+M = conv2(double(M),double(h));
 M = M(1+shift:end-shift,1+shift:end-shift);
 M = uint8(M);

@@ -28,8 +28,8 @@ if varargin{1}==0
         tld.handle = imshow(tld.img{1}.input,'initialmagnification','fit');
         bb_draw(tld.source.bb);
         
-        set(gcf,'MenuBar','none','ToolBar','none','color',[0 0 0]);
-        set(gca,'position',[0 0 1 1]);
+        %set(gcf,'MenuBar','none','ToolBar','none','color',[0 0 0]);
+        %set(gca,'position',[0 0 1 1]);
            
         img = tld.img{1}.input;
         img = embedPex(img,tld);
@@ -37,7 +37,7 @@ if varargin{1}==0
         set(tld.handle,'cdata',img);
         hold on;
         
-        set(gcf,'Position',[100 100 [640 360]]);
+        %set(gcf,'Position',[100 100 [640 360]]);
         %set(gcf,'Position',[100 100 2*[320 240]+1]);
 
         % Info
@@ -137,8 +137,8 @@ else
     % Info
     
     %string = ['#' num2str(i) ', fps:' num2str(1/toc,2) ', ' num2str(tld.control.maxbbox) '/' num2str(tld.nGrid) ', Fern: ' num2str(tld.model.thr_fern,4) ', NN: ' num2str(tld.model.thr_nn,3) '/' num2str(tld.model.thr_nn_valid,3)];
-    string = ['#' num2str(i) ', fps:' num2str(1/toc,3) ', ' num2str(tld.control.maxbbox) '/' num2str(tld.nGrid)];
-    text(10,H-10,string,'color','white','backgroundcolor','k');
+    %string = ['#' num2str(i) ', fps:' num2str(1/toc,3) ', ' num2str(tld.control.maxbbox) '/' num2str(tld.nGrid)];
+    %text(10,H-10,string,'color','white','backgroundcolor','k');
     %if tld.control.update_detector
     %    text(10,H-30,'Learning','color','white','backgroundcolor','k');
     %end

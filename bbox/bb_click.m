@@ -19,12 +19,12 @@
 function bb = bb_click(tld,img)
 % Create
 
-if isfield(tld,'handle')
-     h = get(gca,'Children'); delete(h(1:end-1));
-    set(tld.handle,'cdata',img);
-else
+%if isfield(tld,'handle')
+%     h = get(gca,'Children'); delete(h(1:end-1));
+%    set(tld.handle,'cdata',img);
+%else
     imshow(img);
-end
+%end
 text(10,10,'Define bounding box and double click inside.','color','white');
 h = imrect;
 p = wait(h);

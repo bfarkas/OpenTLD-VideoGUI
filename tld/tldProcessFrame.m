@@ -17,7 +17,7 @@
 
 function tld = tldProcessFrame(tld,i)
 
-I = tld.source.idx(i); % get current index
+I = int32(tld.source.idx(i)); % get current index
 tld.img{I} = img_get(tld.source,I); % grab frame from camera / load image
 
 % TRACKER  ----------------------------------------------------------------
