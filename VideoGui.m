@@ -22,7 +22,7 @@ function varargout = VideoGui(varargin)
 
 % Edit the above text to modify the response to help VideoGui
 
-% Last Modified by GUIDE v2.5 16-Aug-2011 18:24:12
+% Last Modified by GUIDE v2.5 31-Aug-2011 15:57:47
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -140,6 +140,9 @@ function frameslider_Callback(hObject, eventdata, handles)
     end
     set(handles.framecounter,'String',num2str(videoposition));
     image(read(opt.source.vidobj, videoposition),'Parent',handles.videowindow);
+    set(handles.videowindow,'Box','off');
+    set(handles.videowindow,'XTick',[]);
+    set(handles.videowindow,'YTick',[]);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -175,8 +178,17 @@ function openfilebutton_Callback(hObject, eventdata, handles)
     global videoheight;
     global videowidth;
     global opt;
+    global journal;
     [videofile,videopath]=uigetfile('*.*','Choose a Videofile');
     if ischar(videofile) && ischar(videopath)
+        % open journal file from video and save values for later use
+        journalfile = ['journal-',videofile(5:8),'.txt'];
+        fid = fopen(strcat(videopath,journalfile),'r');
+        journal = textscan(fid,'%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s','headerlines',2);
+        fclose(fid);
+        opt.savepath = videopath;
+        opt.journalname = ['newjournal-',videofile(5:8),'.txt'];
+        % open video file
         opt.source.vidobj = VideoReader(strcat(videopath,videofile));
         videoframes = opt.source.vidobj.NumberOfFrames;
         videoheight = opt.source.vidobj.Height;
@@ -186,6 +198,9 @@ function openfilebutton_Callback(hObject, eventdata, handles)
         set(handles.frameslider,'Enable','on');
         %axes(handles.videowindow);
         image(read(opt.source.vidobj, 1),'Parent',handles.videowindow);
+        set(handles.videowindow,'Box','off');
+        set(handles.videowindow,'XTick',[]);
+        set(handles.videowindow,'YTick',[]);
         set(handles.setlearninpoint,'Enable','on');
         set(handles.setlearnoutpoint,'Enable','on');
         set(handles.setlearninpoint,'ForegroundColor',[0 0 0]);
@@ -246,6 +261,9 @@ function startprocessing_Callback(hObject, eventdata, handles)
     global opt;
     global pausedframe;
     global killed;
+    global journal;
+    global videowidth;
+    global videoheight;
     killed = 0;
     set(handles.frameslider,'Enable','inactive');
     set(handles.statuslabel,'String','processing...');
@@ -269,6 +287,16 @@ function startprocessing_Callback(hObject, eventdata, handles)
         end
     end
     bb = tld.bb; conf = tld.conf; % return results
+    % save results to new dikablis journal
+    newjournal = tld2dikablis(journal,bb,videowidth,videoheight);
+    fid = fopen([opt.savepath opt.journalname],'w');
+    fprintf(fid,'Version 1.08\n');
+    fprintf(fid,'index\ttimestamp\teyeroihoriz\teyeroivert\teyeroizoomx\teyeroizoomy\tblendmode\tblendfactor\tonlinecalib\teye_valid\teye_x\teye_y\teye_w\teye_h\teye_a\tfield_x\tfield_y\tdisplaymode\tdisplayeyedetection\tevent\n');
+    for row = 1:size(bb,2)
+        fprintf(fid, '%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t%s\t%s\n', newjournal{row}{:});
+    end
+    fclose(fid);
+    % dlmwrite([opt.savepath opt.journalname],newjournal,' ');
     if ischar(opt.savepath) && ischar(opt.savefilename)
         dlmwrite([opt.savepath opt.savefilename],[bb; conf]');
     else
@@ -279,8 +307,6 @@ function startprocessing_Callback(hObject, eventdata, handles)
     disp(['Results saved to ',opt.savepath,opt.savefilename]);
     set(handles.openoutputbutton,'Enable','on');
     set(handles.openoutputbutton,'ForegroundColor',[0 0 0]);
-    set(handles.createjournalbutton,'Enable','on');
-    set(handles.createjournalbutton,'ForegroundColor',[0 0 0]);
     if killed == 1
         set(handles.statuslabel,'String','killed');
     else    
@@ -297,17 +323,6 @@ function killswitch_Callback(hObject, eventdata, handles)
     global killed;
     killed = 1;
     
-
-
-% --- Executes on button press in savebutton.
-function savebutton_Callback(hObject, eventdata, handles)
-% hObject    handle to savebutton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-    global opt;
-    [filename,path]=uiputfile('*.txt','Save Output as');
-    opt.savepath = path;
-    opt.savefilename = filename;
 
 
 % --- Executes on key press with focus on figure1 and none of its controls.
@@ -330,6 +345,9 @@ function figure1_KeyPressFcn(hObject, eventdata, handles)
             set(handles.frameslider,'Value',videoposition/videoframes);
             set(handles.framecounter,'String',num2str(videoposition));
             image(read(opt.source.vidobj, videoposition),'Parent',handles.videowindow);
+            set(handles.videowindow,'Box','off');
+            set(handles.videowindow,'XTick',[]);
+            set(handles.videowindow,'YTick',[]);
         case 'rightarrow'
             videoposition = videoposition + 1;
             if videoposition >= videoframes
@@ -338,6 +356,9 @@ function figure1_KeyPressFcn(hObject, eventdata, handles)
             set(handles.frameslider,'Value',videoposition/videoframes);
             set(handles.framecounter,'String',num2str(videoposition));
             image(read(opt.source.vidobj, videoposition),'Parent',handles.videowindow);
+            set(handles.videowindow,'Box','off');
+            set(handles.videowindow,'XTick',[]);
+            set(handles.videowindow,'YTick',[]);
     end
     
 % --- Executes on key press with focus on frameslider and none of its controls.
@@ -356,19 +377,4 @@ function openoutputbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
     global opt;
-    open([opt.savepath opt.savefilename]);
-
-
-% --- Executes on button press in createjournalbutton.
-function createjournalbutton_Callback(hObject, eventdata, handles)
-% hObject    handle to createjournalbutton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-    global tld;
-    global videowidth;
-    global videoheight;
-    [journalfilename,journalpath]=uiputfile('*.csv','Save Dikablis Journal as'); % correct extension for journal?
-    journal = tld2dikablis(tld.bb,videowidth,videoheight);
-    dlmwrite([journalpath journalfilename],journal);
-    %open([journalpath journalfilename]);
-    
+    open([opt.savepath opt.journalname]);

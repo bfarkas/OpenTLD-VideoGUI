@@ -1,4 +1,4 @@
-function journal = tld2dikablis( bb,video_width,video_height )
+function journal = tld2dikablis( oldjournal,bb,video_width,video_height )
 %TLD2DIKABLIS converts tld data to dikablis journal
 %
 %   the following columns need to be filled with data:
@@ -22,22 +22,27 @@ function journal = tld2dikablis( bb,video_width,video_height )
 
     tic; % initilialize time reference
     frames = size(bb,2);
-    journal = zeros(frames,20);
-    eyeroihoriz = 0;
-    eyeroivert  = 0;
-    eyeroizoomx = 0;
-    eyeroizommy  = 0;
-    blendmode  = 1;
-    blendfactor  = 128;
-    onlinecalib = 0;
-    displaymode = 2;
-    displayeyedetection = 1; 
-    event = 0;
+    journal = cell(frames,1);
     
     for frame = 1:frames
         % iterate over all frames and fill journal
         idx = frame - 1;
-        timestamp = round(toc*1000); % get time in ms
+        %timestamp = round(toc*1000); % get time in ms
+        timestamp = oldjournal{1,2}{frame};
+        % get constants from old journal
+        eyeroihoriz = oldjournal{1,3}{frame};
+        eyeroivert  = oldjournal{1,4}{frame};
+        eyeroizoomx = oldjournal{1,5}{frame};
+        eyeroizommy  = oldjournal{1,6}{frame};
+        blendmode  = oldjournal{1,7}{frame};
+        blendfactor  = oldjournal{1,8}{frame};
+        onlinecalib = oldjournal{1,9}{frame};
+        displaymode = oldjournal{1,18}{frame};
+        displayeyedetection = oldjournal{1,19}{frame};
+        event = oldjournal{1,20}{frame};
+        % event causing some cell related trouble atm, leave it blank for
+        % now
+        % event = ' ';
         if isnan(bb(1,frame))
             eye_valid = 0;
             eye_x = 0;
@@ -50,10 +55,10 @@ function journal = tld2dikablis( bb,video_width,video_height )
             eye_valid = 1;
             % convert bb coordinates...
             % assuming x and y coordinates are the center of the pupil
-            eye_w = bb(3,frame)-bb(1,frame);
-            eye_h = bb(4,frame)-bb(2,frame);
-            eye_x = bb(1,frame)+0.5*eye_w;
-            eye_y = video_height-(bb(2,frame)+0.5*eye_h);
+            eye_w = int16(bb(3,frame)-bb(1,frame));
+            eye_h = int16(bb(4,frame)-bb(2,frame));
+            eye_x = int16(bb(1,frame)+0.5*eye_w);
+            eye_y = int16(video_height-(bb(2,frame)+0.5*eye_h));
             % no idea how this should work, so assuming eye coordinates
             field_x = eye_x;
             field_y = eye_y;
@@ -61,8 +66,8 @@ function journal = tld2dikablis( bb,video_width,video_height )
 
         % assume journal needs area of ellipse, the dikablis values are a
         % bit off
-        eye_a = eye_w*0.5*eye_h*0.5*pi;
-        journal(frame,:) = [idx timestamp eyeroihoriz eyeroivert eyeroizoomx eyeroizommy blendmode blendfactor onlinecalib eye_valid eye_x eye_y eye_w eye_h eye_a field_x field_y displaymode displayeyedetection event];
+        eye_a = int16(eye_w*0.5*eye_h*0.5*pi);
+        journal{frame,:} = {idx; timestamp; eyeroihoriz; eyeroivert; eyeroizoomx; eyeroizommy; blendmode; blendfactor; onlinecalib; eye_valid; eye_x; eye_y; eye_w; eye_h; eye_a; field_x; field_y; displaymode; displayeyedetection; event};
     end    
 end
 
