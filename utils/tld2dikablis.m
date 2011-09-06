@@ -55,13 +55,13 @@ function journal = tld2dikablis( oldjournal,bb,video_width,video_height )
             eye_valid = 1;
             % convert bb coordinates...
             % assuming x and y coordinates are the center of the pupil
-            eye_w = int16(bb(3,frame)-bb(1,frame));
-            eye_h = int16(bb(4,frame)-bb(2,frame));
-            eye_x = int16(bb(1,frame)+0.5*eye_w);
-            eye_y = int16(video_height-(bb(2,frame)+0.5*eye_h));
-            % no idea how this should work, so assuming eye coordinates
-            field_x = eye_x;
-            field_y = eye_y;
+            eye_w = int32(bb(3,frame)-bb(1,frame));
+            eye_h = int32(bb(4,frame)-bb(2,frame));
+            eye_x = int32((bb(1,frame)+0.5*eye_w)*2);
+            eye_y = int32((video_height-(bb(2,frame)+0.5*eye_h))*2);
+            % no idea how this should work, so assuming zero
+            field_x = 0;
+            field_y = 0;
         end
 
         % assume journal needs area of ellipse, the dikablis values are a
